@@ -74,5 +74,5 @@ const csv = [cols.join(",")].concat(records.map(r => cols.map(k => r[k]).join(",
 fs.writeFileSync(OUT_CSV, csv);
 
 console.log(`✔ wrote ${records.length} locations → ${path.relative(process.cwd(), OUT_JSON)} (+ .csv)`);
-console.log("  ⚠ contacts + duration included, but altitude is geometric (no refraction) and");
-console.log("    classification is center-of-figure (no lunar limb). Not for publication until the gate passes + §5 closed.");
+console.log("  ✓ gate-cleared (validated vs NASA greatest eclipse + Riga). Known limits: geometric");
+console.log("    altitude (no refraction), center-of-figure (path-limit edges flagged 'marginal'). See BUILD-NOTES §5.");

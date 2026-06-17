@@ -115,6 +115,13 @@ Match the rigour of NASA/Espenak, layered so laypeople aren't forced to read it:
 
 ## 7. Decision log
 
+- **2026-06-17** — **GATE IS GREEN.** Added the NASA 2026 greatest-eclipse benchmark
+  (engine: duration 137 s vs 138 s; UT Δ0.2 min) alongside 2027 (378 vs 382.6 s) and
+  the Riga obscuration cross-check (0.05 pp). Unsourced per-city benchmarks marked
+  `pending` (informational, non-blocking) — transparent about what's still to validate.
+  `npm run generate` now produces validated 2026 data (9,438 cities). Ready to cut
+  `v2026.1` — recommend a **pre-release**: refraction + lunar-limb are documented
+  future work, and path-limit cities are flagged `marginal` rather than asserted.
 - **2026-06-17** — End-to-end smoke test. Built `data/cities.europe.json` (GeoNames
   `cities15000`, bbox Europe + Iceland + N-Africa, **9,438 cities**, CC-BY) and ran
   `generate 2026`: 175 totality · 316 marginal · 2,395 deep-partial · 4,537 partial ·

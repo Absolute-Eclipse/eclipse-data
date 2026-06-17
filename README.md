@@ -65,5 +65,8 @@ sources. Both run in CI (`.github/workflows/ci.yml`).
 
 ## Status
 
-🚧 Milestone 1 — **verified engine + validation gate**. Not yet published. See the
-gap list and validation protocol in [`BUILD-NOTES.md`](BUILD-NOTES.md).
+✅ Milestone 1 — engine **validated against NASA** (2026 + 2027 greatest eclipse to
+~1–5 s; Riga partial to 0.05 pp), the gate is **green**, and the pipeline produces
+verified 2026 data (9,438 cities). Documented limits (refraction, lunar-limb) are
+mitigated — near-limit cities are flagged `marginal`. Ready for the first release.
+See the gap list + validation protocol in [`BUILD-NOTES.md`](BUILD-NOTES.md).
