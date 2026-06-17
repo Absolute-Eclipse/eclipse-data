@@ -8,6 +8,7 @@
   "repository": { "type": "git", "url": "https://github.com/absolute-eclipse/eclipse-data" },
   "scripts": {
     "test": "node --test",
+    "cities": "node scripts/cities.js",
     "validate": "node scripts/validate.js",
     "generate": "npm run validate && node scripts/generate.js",
     "build:engine": "esbuild engine/besselian.js --minify --sourcemap --outfile=dist/eclipse-engine.min.js",

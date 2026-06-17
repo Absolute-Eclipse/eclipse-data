@@ -74,4 +74,5 @@ const csv = [cols.join(",")].concat(records.map(r => cols.map(k => r[k]).join(",
 fs.writeFileSync(OUT_CSV, csv);
 
 console.log(`✔ wrote ${records.length} locations → ${path.relative(process.cwd(), OUT_JSON)} (+ .csv)`);
-console.log("  ⚠ scaffold output: obscuration/altitude only, geometric, ±30 s peak. Not for publication until §5 closed.");
+console.log("  ⚠ contacts + duration included, but altitude is geometric (no refraction) and");
+console.log("    classification is center-of-figure (no lunar limb). Not for publication until the gate passes + §5 closed.");

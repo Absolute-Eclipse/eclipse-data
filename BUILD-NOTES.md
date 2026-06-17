@@ -115,6 +115,14 @@ Match the rigour of NASA/Espenak, layered so laypeople aren't forced to read it:
 
 ## 7. Decision log
 
+- **2026-06-17** — End-to-end smoke test. Built `data/cities.europe.json` (GeoNames
+  `cities15000`, bbox Europe + Iceland + N-Africa, **9,438 cities**, CC-BY) and ran
+  `generate 2026`: 175 totality · 316 marginal · 2,395 deep-partial · 4,537 partial ·
+  2,015 none. Longest totality clusters in N Spain (Asturias/Galicia/León ~1m46–49 s,
+  Sun ~9–11°) — matches reality; the "marginal" flag catches every knife-edge city
+  (Madrid, Barcelona, Bilbao, Vigo). Pipeline runs end-to-end; output stays gated
+  (no refraction/limb; benchmarks unfilled) until the gate passes.
+
 - **2026-06-17** — Repo created under `github.com/absolute-eclipse`. Decisions:
   own Besselian engine (not scraping a third party) so the method is ours and citable;
   GeoNames `cities15000` for the European city index; Copernicus GLO-30 as the DEM
