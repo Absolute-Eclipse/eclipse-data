@@ -17,7 +17,7 @@
 <script src="{{ 'eclipse-engine.min.js' | asset_url }}" defer></script>
 
 <div
-  class="ae-ed section spacing-style color-{{ section.settings.color_scheme }}"
+  class="ae-ed section color-{{ section.settings.color_scheme }}"
   id="ae-ed-{{ section.id }}"
   data-cities="{{ 'eclipse-cities.json' | asset_url }}"
   data-event="{{ section.settings.default_event | default: '2026' }}"
@@ -26,8 +26,8 @@
   <div class="section-background color-{{ section.settings.color_scheme }}"></div>
 
   {%- comment -%} ── Hero ── {%- endcomment -%}
-  <header class="ae-ed__hero">
-    <div class="ae-ed__wrap">
+  <header class="ae-ed__hero force-full-width">
+    <div class="ae-ed__hero-inner">
       {%- if section.settings.eyebrow != blank -%}<p class="ae-ed__eyebrow">{{ section.settings.eyebrow }}</p>{%- endif -%}
       <h1 class="ae-ed__h1">{{ section.settings.heading | default: 'Will you see the eclipse?' }}</h1>
       {%- if section.settings.intro != blank -%}<p class="ae-ed__intro">{{ section.settings.intro }}</p>{%- endif -%}
@@ -40,7 +40,7 @@
     </div>
   </header>
 
-  <div class="ae-ed__wrap ae-ed__body">
+  <div class="ae-ed__body">
     {%- comment -%} ── Controls: tabs + event ── {%- endcomment -%}
     <div class="ae-ed__controls">
       <div class="ae-ed__seg ae-ed__tabs" data-ed="view-seg">
@@ -109,9 +109,13 @@
 </div>
 
 {% stylesheet %}
-  .ae-ed { padding-block: var(--ae-ed-pad, 64px); position: relative; }
-  .ae-ed__wrap { max-width: var(--normal-content-width); margin-inline: auto; padding-inline: var(--padding-xl); }
+  /* width/insets come from the theme `.section` grid (children land in the centred
+     content column); the hero breaks out full-bleed with `force-full-width` and
+     re-centres its own content. No hand-rolled max-width/padding-inline. */
+  .ae-ed { position: relative; }
   .ae-ed__hero { background: #000; color: #fff; padding-block: clamp(2.25rem, 6vw, 4rem); margin-block-end: var(--margin-3xl); }
+  .ae-ed__hero-inner { max-width: var(--normal-content-width); margin-inline: auto; padding-inline: var(--page-margin, var(--padding-xl)); }
+  .ae-ed__body { padding-block-end: var(--ae-ed-pad, 64px); }
   .ae-ed__eyebrow { margin: 0 0 1rem; font-family: var(--font-subheading--family); font-weight: 600; font-size: var(--font-size--2xs); letter-spacing: var(--letter-spacing-md); text-transform: uppercase; color: #7da2ff; }
   .ae-ed__h1 { margin: 0; font-family: var(--font-heading--family); font-weight: var(--font-heading--weight); font-size: clamp(2.4rem, 5.5vw, 3.75rem); line-height: 1.06; color: #fff; }
   .ae-ed__intro { max-width: 42rem; margin: 1rem 0 0; font-size: var(--font-size--lg); line-height: var(--line-height--body-normal); color: rgb(255 255 255 / 0.78); }
