@@ -65,6 +65,7 @@
         <button type="button" class="ae-ed__btn ae-ed__btn--ghost" data-ed="geo">📍 My location</button>
       </div>
       <div class="ae-ed__chips" data-ed="chips"><span class="ae-ed__lab">Quick pick</span></div>
+      <p class="ae-ed__error" data-ed="error" hidden></p>
       <div class="ae-ed__result" data-ed="result"></div>
     </section>
 
@@ -143,6 +144,8 @@
   .ae-ed__chips { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .7rem; align-items: center; }
   .ae-ed__chip { font-size: var(--font-size--xs); font-weight: 500; padding: .4rem .8rem; border: var(--style-border-width) solid var(--color-border); background: var(--color-background); color: var(--color-foreground); cursor: pointer; }
   .ae-ed__chip:hover { border-color: var(--ae-accent); color: var(--ae-accent); }
+  .ae-ed__error { margin: .6rem 0 0; color: var(--color-error, #8B0000); font-size: var(--font-size--sm); font-weight: 500; }
+  .ae-ed__error[hidden] { display: none; }
 
   .ae-ed__result { border: var(--style-border-width) solid var(--color-border); border-block-start: 5px solid var(--ae-st, var(--ae-accent)); padding: var(--padding-2xl); margin-top: var(--margin-xl); }
   .ae-ed__result:empty { display: none; }
@@ -231,15 +234,24 @@
       '<div class="ae-ed__rcta"><a class="ae-ed__btn" href="{{ routes.root_url }}collections/2026-solar-eclipse">Shop certified glasses</a>'+travel+'</div>';
   }
 
+  function showError(msg){ var e=$("error"); if(e){ e.textContent=msg; e.hidden=false; } }
+  function clearError(){ var e=$("error"); if(e) e.hidden=true; }
   function resolve(s) {
     s = (s||"").trim(); if (!s) return null;
     var m = s.match(/^(-?\d+(?:\.\d+)?)[ ,]+(-?\d+(?:\.\d+)?)$/);
     if (m) return { lat:+m[1], lon:+m[2], label:(+m[1]).toFixed(3)+", "+(+m[2]).toFixed(3) };
-    var c = COORDS[s.toLowerCase()];
-    if (c) return { lat:c[0], lon:c[1], label:s.replace(/\b\w/g,function(x){return x.toUpperCase();}) };
+    var key = s.toLowerCase();
+    if (COORDS[key]) { var cc=COORDS[key]; return { lat:cc[0], lon:cc[1], label:s.replace(/\b\w/g,function(x){return x.toUpperCase();}) }; }
+    if (cities) {                                  // match against the loaded city index (sorted by population)
+      var exact=null, pre=null;
+      for (var i=0;i<cities.length;i++){ var ci=cities[i], n=ci.n.toLowerCase();
+        if (n===key){ exact=ci; break; } if (!pre && n.indexOf(key)===0) pre=ci; }
+      var hit = exact || pre;
+      if (hit) return { lat:hit.lat, lon:hit.lon, label:hit.n + (hit.c ? ", "+hit.c : "") };
+    }
     return null;
   }
-  function check(){ var r=resolve($("loc").value); if(!r){ alert("Try a coordinate like 40.42, -3.70."); return; } showResult(r.lat,r.lon,r.label); }
+  function check(){ var r=resolve($("loc").value); if(!r){ showError("Couldn't find that place. Try a nearby city, coordinates like 40.42, -3.70, or use 📍 My location."); return; } clearError(); showResult(r.lat,r.lon,r.label); }
 
   function browseRows() {
     if (browseCache[event]) return browseCache[event];
@@ -279,8 +291,8 @@
       if(lastLoc) showResult(lastLoc.lat,lastLoc.lon,lastLoc.label); }); });
     $("check").addEventListener("click",check);
     $("loc").addEventListener("keydown",function(e){ if(e.key==="Enter") check(); });
-    $("geo").addEventListener("click",function(){ if(!navigator.geolocation){alert("Geolocation unavailable — type a place.");return;}
-      navigator.geolocation.getCurrentPosition(function(p){ showResult(p.coords.latitude,p.coords.longitude,"Your location"); }, function(){ alert("Couldn't get your location — type a place."); }); });
+    $("geo").addEventListener("click",function(){ if(!navigator.geolocation){ showError("Geolocation isn't available here — type a city or coordinates."); return; }
+      navigator.geolocation.getCurrentPosition(function(p){ clearError(); showResult(p.coords.latitude,p.coords.longitude,"Your location"); }, function(){ showError("Couldn't get your location — type a city or coordinates."); }); });
     var ch=$("chips"); CHIPS.forEach(function(n){ var b=document.createElement("button"); b.type="button"; b.className="ae-ed__chip"; b.textContent=n; b.addEventListener("click",function(){ $("loc").value=n; check(); }); ch.appendChild(b); });
     $("q").addEventListener("input",renderTable); $("status").addEventListener("input",renderTable);
     root.querySelectorAll('[data-ed="table"] thead th').forEach(function(th){ th.addEventListener("click",function(){ var k=th.dataset.key;
