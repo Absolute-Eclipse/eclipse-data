@@ -1,0 +1,9 @@
+{
+  "sections": {
+    "main": {
+      "type": "ae-eclipse-data",
+      "settings": {}
+    }
+  },
+  "order": ["main"]
+}

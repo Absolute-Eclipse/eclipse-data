@@ -1,0 +1,305 @@
+{%- comment -%}
+  sections/ae-eclipse-data.liquid — the Eclipse Data Explorer (on-site tool).
+
+  Runs the verified Besselian engine (assets/eclipse-engine.min.js, global `Eclipse`)
+  fully in the browser — "Check your spot" computes any coordinate live; "Browse
+  all data" computes a vendored top-800 city index (assets/eclipse-cities.json).
+  No external runtime dependency. Full open data + the embeddable widget live in
+  the public repo/release (github.com/Absolute-Eclipse/eclipse-data).
+
+  Tokens per plans/theme-css-cheatsheet.md (Trirong/Red Hat, navy #000f9f, square
+  corners). Two tabs, one visible at a time (the agreed UX).
+{%- endcomment -%}
+
+{%- assign accent = section.settings.accent_color | default: '#000f9f' -%}
+{%- assign rel = '2.0 s' -%}
+
+<script src="{{ 'eclipse-engine.min.js' | asset_url }}" defer></script>
+
+<div
+  class="ae-ed section spacing-style color-{{ section.settings.color_scheme }}"
+  id="ae-ed-{{ section.id }}"
+  data-cities="{{ 'eclipse-cities.json' | asset_url }}"
+  data-event="{{ section.settings.default_event | default: '2026' }}"
+  style="--ae-accent: {{ accent }}; --ae-ed-pad: {{ section.settings.padding_block | default: 64 }}px;"
+>
+  <div class="section-background color-{{ section.settings.color_scheme }}"></div>
+
+  {%- comment -%} ── Hero ── {%- endcomment -%}
+  <header class="ae-ed__hero">
+    <div class="ae-ed__wrap">
+      {%- if section.settings.eyebrow != blank -%}<p class="ae-ed__eyebrow">{{ section.settings.eyebrow }}</p>{%- endif -%}
+      <h1 class="ae-ed__h1">{{ section.settings.heading | default: 'Will you see the eclipse?' }}</h1>
+      {%- if section.settings.intro != blank -%}<p class="ae-ed__intro">{{ section.settings.intro }}</p>{%- endif -%}
+      <div class="ae-ed__stats">
+        <div class="ae-ed__stat"><b data-ed="s-count">—</b><span>Locations</span></div>
+        <div class="ae-ed__stat"><b data-ed="s-total">—</b><span>In totality</span></div>
+        <div class="ae-ed__stat"><b>±{{ rel }}</b><span>vs NASA</span></div>
+        <div class="ae-ed__stat"><b>Open data</b><span>CC-BY</span></div>
+      </div>
+    </div>
+  </header>
+
+  <div class="ae-ed__wrap ae-ed__body">
+    {%- comment -%} ── Controls: tabs + event ── {%- endcomment -%}
+    <div class="ae-ed__controls">
+      <div class="ae-ed__seg ae-ed__tabs" data-ed="view-seg">
+        <button type="button" data-view="check" aria-pressed="true">Check your spot</button>
+        <button type="button" data-view="browse" aria-pressed="false">Browse all data</button>
+      </div>
+      <div class="ae-ed__eventbar">
+        <span class="ae-ed__lab">Eclipse</span>
+        <div class="ae-ed__seg" data-ed="event-seg">
+          <button type="button" data-event="2026" aria-pressed="true">12 Aug 2026</button>
+          <button type="button" data-event="2027" aria-pressed="false">2 Aug 2027</button>
+        </div>
+      </div>
+    </div>
+
+    {%- comment -%} ── View A: Check your spot ── {%- endcomment -%}
+    <section data-panel="check">
+      <p class="ae-ed__lede">Type a place or coordinates, or use your location — we compute exactly what you'll see.</p>
+      <div class="ae-ed__locrow">
+        <input data-ed="loc" type="text" placeholder="e.g. Madrid   ·   or  40.42, -3.70" autocomplete="off">
+        <button type="button" class="ae-ed__btn" data-ed="check">Check</button>
+        <button type="button" class="ae-ed__btn ae-ed__btn--ghost" data-ed="geo">📍 My location</button>
+      </div>
+      <div class="ae-ed__chips" data-ed="chips"><span class="ae-ed__lab">Quick pick</span></div>
+      <div class="ae-ed__result" data-ed="result"></div>
+    </section>
+
+    {%- comment -%} ── View B: Browse all data ── {%- endcomment -%}
+    <section data-panel="browse" hidden>
+      <p class="ae-ed__lede">Major European cities — sort, filter, and download. Click a row to open it above.</p>
+      <div class="ae-ed__toolbar">
+        <input data-ed="q" type="search" placeholder="City or country…" autocomplete="off">
+        <select data-ed="status">
+          <option value="">All</option><option value="totality">Totality</option>
+          <option value="marginal">Marginal (edge)</option><option value="deep-partial">Deep partial</option>
+          <option value="partial">Partial</option>
+        </select>
+        <span class="ae-ed__count" data-ed="count"></span>
+        <a class="ae-ed__btn ae-ed__btn--ghost" data-ed="download"
+           href="https://github.com/Absolute-Eclipse/eclipse-data/releases/latest" target="_blank" rel="noopener">Full data ↗</a>
+      </div>
+      <div class="ae-ed__tablewrap">
+        <table class="ae-ed__table" data-ed="table">
+          <thead><tr>
+            <th data-key="city">City</th><th data-key="country">Country</th><th data-key="status">Status</th>
+            <th class="num" data-key="obsc">Coverage</th><th class="num" data-key="dur">Totality</th><th class="num" data-key="alt">Sun alt</th>
+          </tr></thead>
+          <tbody data-ed="rows"><tr><td colspan="6" class="ae-ed__muted">Computing…</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+
+    {%- comment -%} ── Methodology + CTA ── {%- endcomment -%}
+    <div class="ae-ed__panels">
+      <div class="ae-ed__panel">
+        <h2>How it's computed</h2>
+        <p>Local circumstances from the eclipse's <b>Besselian elements</b>, validated against NASA (greatest eclipse to ~1–5 s). Any point is solved live in your browser. Cities within a hair of the path limit are flagged <b>marginal</b>, not asserted — see the <a href="https://github.com/Absolute-Eclipse/eclipse-data/blob/main/BUILD-NOTES.md" target="_blank" rel="noopener">methodology</a>.</p>
+      </div>
+      <div class="ae-ed__panel ae-ed__cta">
+        <h2>You'll need certified glasses</h2>
+        <p>For every partial stage — wherever you are — you need CE / ISO&nbsp;12312-2 certified eclipse glasses. Reusable frames cover both 2026 and 2027.</p>
+        <a class="ae-ed__btn" href="{{ routes.root_url }}collections/2026-solar-eclipse">Shop certified glasses</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% stylesheet %}
+  .ae-ed { padding-block: var(--ae-ed-pad, 64px); position: relative; }
+  .ae-ed__wrap { max-width: var(--normal-content-width); margin-inline: auto; padding-inline: var(--padding-xl); }
+  .ae-ed__hero { background: #000; color: #fff; padding-block: clamp(2.25rem, 6vw, 4rem); margin-block-end: var(--margin-3xl); }
+  .ae-ed__eyebrow { margin: 0 0 1rem; font-family: var(--font-subheading--family); font-weight: 600; font-size: var(--font-size--2xs); letter-spacing: var(--letter-spacing-md); text-transform: uppercase; color: #7da2ff; }
+  .ae-ed__h1 { margin: 0; font-family: var(--font-heading--family); font-weight: var(--font-heading--weight); font-size: clamp(2.4rem, 5.5vw, 3.75rem); line-height: 1.06; color: #fff; }
+  .ae-ed__intro { max-width: 42rem; margin: 1rem 0 0; font-size: var(--font-size--lg); line-height: var(--line-height--body-normal); color: rgb(255 255 255 / 0.78); }
+  .ae-ed__stats { display: flex; flex-wrap: wrap; gap: var(--gap-md); margin-top: 1.5rem; }
+  .ae-ed__stat { display: flex; flex-direction: column; padding: .5rem .9rem; border: 1px solid rgb(255 255 255 / 0.18); }
+  .ae-ed__stat b { font-family: var(--font-heading--family); font-weight: 300; font-size: var(--font-size--xl); }
+  .ae-ed__stat span { font-size: var(--font-size--2xs); text-transform: uppercase; letter-spacing: var(--letter-spacing-sm); color: rgb(255 255 255 / 0.55); }
+
+  .ae-ed__controls { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: var(--gap-md); margin-block-end: var(--margin-xl); }
+  .ae-ed__seg { display: inline-flex; border: var(--style-border-width) solid var(--color-border); }
+  .ae-ed__seg button { font-family: var(--font-subheading--family); font-weight: 600; font-size: var(--font-size--xs); letter-spacing: var(--letter-spacing-sm); text-transform: uppercase; padding: .6rem 1.05rem; border: 0; background: transparent; color: var(--color-foreground); cursor: pointer; }
+  .ae-ed__tabs button { font-size: var(--font-size--sm); padding: .65rem 1.25rem; }
+  .ae-ed__seg button + button { border-inline-start: var(--style-border-width) solid var(--color-border); }
+  .ae-ed__seg button[aria-pressed="true"] { background: var(--ae-accent); color: #fff; }
+  .ae-ed__eventbar { display: flex; align-items: center; gap: .6rem; }
+  .ae-ed__lab { font-size: var(--font-size--2xs); text-transform: uppercase; letter-spacing: var(--letter-spacing-sm); color: rgb(var(--color-foreground-rgb) / 0.55); }
+  [data-panel][hidden] { display: none; }
+  .ae-ed__lede { margin: 0 0 var(--margin-lg); color: rgb(var(--color-foreground-rgb) / 0.7); font-size: var(--font-size--md); }
+
+  .ae-ed__locrow { display: flex; flex-wrap: wrap; gap: var(--gap-sm); }
+  .ae-ed__locrow input { flex: 1 1 280px; font-family: var(--font-body--family); font-size: var(--font-size--md); padding: .7rem .85rem; border: var(--style-border-width) solid var(--color-border); border-radius: var(--style-border-radius-inputs); min-height: 46px; background: var(--color-background); color: var(--color-foreground); }
+  .ae-ed__btn { font-family: var(--font-subheading--family); font-weight: 600; font-size: var(--font-size--xs); letter-spacing: var(--letter-spacing-sm); text-transform: uppercase; display: inline-flex; align-items: center; justify-content: center; gap: .45rem; padding: .7rem 1.1rem; border: var(--style-border-width) solid var(--ae-accent); border-radius: var(--style-border-radius-buttons-primary); background: var(--ae-accent); color: #fff; cursor: pointer; min-height: 46px; text-decoration: none; white-space: nowrap; }
+  .ae-ed__btn:hover { opacity: .86; }
+  .ae-ed__btn--ghost { background: transparent; color: var(--ae-accent); }
+  .ae-ed__chips { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .7rem; align-items: center; }
+  .ae-ed__chip { font-size: var(--font-size--xs); font-weight: 500; padding: .4rem .8rem; border: var(--style-border-width) solid var(--color-border); background: var(--color-background); color: var(--color-foreground); cursor: pointer; }
+  .ae-ed__chip:hover { border-color: var(--ae-accent); color: var(--ae-accent); }
+
+  .ae-ed__result { border: var(--style-border-width) solid var(--color-border); border-block-start: 5px solid var(--ae-st, var(--ae-accent)); padding: var(--padding-2xl); margin-top: var(--margin-xl); }
+  .ae-ed__result:empty { display: none; }
+  .ae-ed__rtop { display: flex; align-items: center; gap: .6rem; margin-bottom: .5rem; }
+  .ae-ed__badge { display: inline-block; padding: .2rem .55rem; font-size: var(--font-size--2xs); font-weight: 800; text-transform: uppercase; letter-spacing: .03em; color: #fff; }
+  .ae-ed__verdict { font-family: var(--font-subheading--family); font-weight: 700; font-size: var(--font-size--2xl); line-height: 1.15; margin: .1rem 0 .35rem; }
+  .ae-ed__sub { margin: 0 0 var(--margin-lg); color: rgb(var(--color-foreground-rgb) / 0.78); max-width: 46rem; }
+  .ae-ed__tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: .6rem; margin-bottom: var(--margin-lg); }
+  .ae-ed__tile { border: var(--style-border-width) solid var(--color-border); padding: .8rem .9rem; }
+  .ae-ed__tile b { display: block; font-family: var(--font-heading--family); font-weight: 300; font-size: var(--font-size--2xl); line-height: 1; }
+  .ae-ed__tile span { font-size: var(--font-size--2xs); text-transform: uppercase; letter-spacing: var(--letter-spacing-sm); color: rgb(var(--color-foreground-rgb) / 0.6); }
+  .ae-ed__advice { display: flex; gap: .6rem; align-items: flex-start; padding: .85rem .95rem; background: rgb(var(--color-foreground-rgb) / 0.04); margin-bottom: var(--margin-lg); font-size: var(--font-size--sm); line-height: var(--line-height--body-normal); }
+  .ae-ed__rcta { display: flex; flex-wrap: wrap; gap: .6rem; }
+
+  .ae-ed__toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--gap-sm); margin-block-end: var(--margin-lg); }
+  .ae-ed__toolbar input, .ae-ed__toolbar select { font-family: var(--font-body--family); font-size: var(--font-size--sm); padding: .5rem .65rem; border: var(--style-border-width) solid var(--color-border); border-radius: var(--style-border-radius-inputs); min-height: 38px; background: var(--color-background); color: var(--color-foreground); }
+  .ae-ed__count { font-size: var(--font-size--xs); color: rgb(var(--color-foreground-rgb) / 0.6); margin-inline-start: auto; }
+  .ae-ed__tablewrap { overflow-x: auto; border: var(--style-border-width) solid var(--color-border); }
+  .ae-ed__table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; min-width: 640px; }
+  .ae-ed__table thead th { position: sticky; top: 0; background: var(--color-background); text-align: left; padding: var(--padding-md) var(--padding-sm); font-size: var(--font-size--2xs); font-weight: 700; text-transform: uppercase; letter-spacing: var(--letter-spacing-sm); color: rgb(var(--color-foreground-rgb) / 0.7); white-space: nowrap; cursor: pointer; user-select: none; border-bottom: var(--border-width-md) solid var(--color-foreground); }
+  .ae-ed__table th.num, .ae-ed__table td.num { text-align: right; }
+  .ae-ed__table tbody td { padding: .6rem var(--padding-sm); border-bottom: var(--style-border-width) solid rgb(var(--color-foreground-rgb) / 0.1); white-space: nowrap; }
+  .ae-ed__table tbody tr { cursor: pointer; }
+  .ae-ed__table tbody tr:hover { background: rgb(var(--color-foreground-rgb) / 0.04); }
+  .ae-ed__muted { color: rgb(var(--color-foreground-rgb) / 0.55); }
+
+  .ae-ed__badge--totality { background: #c8881b; } .ae-ed__badge--marginal { background: #2563eb; }
+  .ae-ed__badge--deep-partial, .ae-ed__badge--partial { background: #64748b; }
+
+  .ae-ed__panels { display: grid; grid-template-columns: 1.3fr 1fr; gap: var(--gap-2xl); margin-top: var(--margin-3xl); }
+  .ae-ed__panel { border: var(--style-border-width) solid var(--color-border); padding: var(--padding-2xl); }
+  .ae-ed__panel h2 { font-family: var(--font-heading--family); font-weight: 200; font-size: var(--font-size--2xl); margin: 0 0 .5rem; }
+  .ae-ed__panel p { margin: .35rem 0; color: rgb(var(--color-foreground-rgb) / 0.75); }
+  .ae-ed__cta { background: #000; } .ae-ed__cta h2, .ae-ed__cta p { color: #fff; } .ae-ed__cta p { color: rgb(255 255 255 / 0.75); }
+  .ae-ed__cta .ae-ed__btn { margin-top: 1rem; border-color: #fff; background: #fff; color: #000; }
+
+  @media screen and (max-width: 749px) {
+    .ae-ed__controls { flex-direction: column; align-items: stretch; }
+    .ae-ed__panels { grid-template-columns: 1fr; }
+    .ae-ed__locrow input { flex: 1 1 100%; }
+  }
+{% endstylesheet %}
+
+<script>
+(function () {
+  var root = document.getElementById("ae-ed-{{ section.id }}");
+  if (!root || root.dataset.edInit) return; root.dataset.edInit = "1";
+  var CITIES_URL = root.dataset.cities, $ = function (s) { return root.querySelector('[data-ed="' + s + '"]'); };
+  var CHIPS = ["Madrid","Barcelona","Zaragoza","Burgos","Palma","Valencia"];
+  var COORDS = { madrid:[40.4168,-3.7038], barcelona:[41.3874,2.1686], zaragoza:[41.6488,-0.8891], burgos:[42.3439,-3.6969], palma:[39.5696,2.6502], valencia:[39.4699,-0.3763], bilbao:[43.263,-2.935], sevilla:[37.3891,-5.9845], "a coruña":[43.3623,-8.4115], santander:[43.4623,-3.8099] };
+  var event = root.dataset.event || "2026", engine = null, cities = null, browseCache = {}, lastLoc = null;
+
+  function ready(cb){ if (window.Eclipse) return cb(); var n=0, t=setInterval(function(){ if(window.Eclipse){clearInterval(t);cb();} else if(++n>100){clearInterval(t);} },50); }
+  function eng(){ if(!engine||engine._ev!==event){ engine=window.Eclipse.for(event); engine._ev=event; } return engine; }
+  function statusOf(c){ var o=c.max.obsc*100; if(c.total) return c.duration_s<30?"marginal":"totality"; return o>=99.5?"marginal":o>=90?"deep-partial":"partial"; }
+  var LABEL={totality:"Totality",marginal:"Marginal","deep-partial":"Deep partial",partial:"Partial"};
+  function fmtDur(s){ var m=Math.floor(s/60),x=s%60; return m?m+"m "+x+"s":x+"s"; }
+  function clock(ut){ if(ut==null) return "—"; var h=Math.floor(ut), m=Math.round((ut-h)*60); if(m===60){h++;m=0;} return h+":"+(m<10?"0":"")+m; }
+
+  function showResult(lat, lon, label) {
+    lastLoc = { lat: lat, lon: lon, label: label };
+    var c = eng().circumstances(lat, lon);
+    if (!c.eclipse || !c.visible) { $("result").innerHTML = '<p class="ae-ed__sub">No eclipse is visible from there (the Sun is below the horizon during the event).</p>'; return; }
+    var st = statusOf(c), obsc = (c.max.obsc*100).toFixed(1), alt = c.max.alt, ut = c.max.ut, cest = clock(ut+2);
+    var verdict, sub;
+    if (st === "totality") { verdict = "Yes — you're in the path of totality"; sub = "The Sun fully disappears: corona, dark sky, and for those seconds you can look without glasses. The real thing."; }
+    else if (st === "marginal") { verdict = "Right on the edge — verdict uncertain"; sub = "You're within a hair of the path limit (~" + obsc + "%). Our model can't call total vs partial this close — treat it as a deep partial and, for guaranteed totality, move into the path."; }
+    else { verdict = "A " + obsc + "% partial eclipse"; sub = "Worth watching with certified glasses, but the Sun never fully disappears here. For true totality you'd travel into the path."; }
+    var hz;
+    if (alt >= 20) hz = "The Sun will be well up (about " + alt + "° high) — easy to see from almost anywhere.";
+    else if (alt >= 8) hz = "The Sun will be fairly low (about " + alt + "°) in the <b>west</b> — avoid tall buildings or hills that way.";
+    else hz = "The Sun will be <b>very low</b> (about " + alt + "°, nearly on the horizon). You need a clear, flat view to the <b>west</b> — a hilltop, open field or west-facing coast.";
+    root.style.setProperty("--ae-st", st==="totality"?"#c8881b":st==="marginal"?"#2563eb":"#64748b");
+    var travel = st === "totality" ? "" : '<a class="ae-ed__btn ae-ed__btn--ghost" href="{{ routes.root_url }}blogs/where-to-watch">Where to watch →</a>';
+    $("result").innerHTML =
+      '<div class="ae-ed__rtop"><span class="ae-ed__badge ae-ed__badge--'+st+'">'+LABEL[st]+'</span><span style="font-weight:600">'+label+'</span></div>'+
+      '<div class="ae-ed__verdict">'+verdict+'</div><p class="ae-ed__sub">'+sub+'</p>'+
+      '<div class="ae-ed__tiles">'+
+        '<div class="ae-ed__tile"><b>'+obsc+'%</b><span>Sun covered</span></div>'+
+        '<div class="ae-ed__tile"><b>'+(c.duration_s?fmtDur(c.duration_s):"—")+'</b><span>Totality</span></div>'+
+        '<div class="ae-ed__tile"><b>'+cest+'</b><span>Peak (CEST)</span></div>'+
+        '<div class="ae-ed__tile"><b>'+alt+'°</b><span>Sun height</span></div>'+
+      '</div>'+
+      '<div class="ae-ed__advice">☀ <div>'+hz+'</div></div>'+
+      '<div class="ae-ed__rcta"><a class="ae-ed__btn" href="{{ routes.root_url }}collections/2026-solar-eclipse">Shop certified glasses</a>'+travel+'</div>';
+  }
+
+  function resolve(s) {
+    s = (s||"").trim(); if (!s) return null;
+    var m = s.match(/^(-?\d+(?:\.\d+)?)[ ,]+(-?\d+(?:\.\d+)?)$/);
+    if (m) return { lat:+m[1], lon:+m[2], label:(+m[1]).toFixed(3)+", "+(+m[2]).toFixed(3) };
+    var c = COORDS[s.toLowerCase()];
+    if (c) return { lat:c[0], lon:c[1], label:s.replace(/\b\w/g,function(x){return x.toUpperCase();}) };
+    return null;
+  }
+  function check(){ var r=resolve($("loc").value); if(!r){ alert("Try a coordinate like 40.42, -3.70."); return; } showResult(r.lat,r.lon,r.label); }
+
+  function browseRows() {
+    if (browseCache[event]) return browseCache[event];
+    var E = eng(), out = [];
+    for (var i=0;i<cities.length;i++){ var c=cities[i], x=E.circumstances(c.lat,c.lon); if(!x.eclipse||!x.visible) continue;
+      out.push({ city:c.n, country:c.c, status:statusOf(x), obsc:+(x.max.obsc*100).toFixed(1), dur:x.duration_s, alt:x.max.alt, lat:c.lat, lon:c.lon }); }
+    out.sort(function(a,b){ return (b.status==="totality")-(a.status==="totality") || b.obsc-a.obsc; });
+    browseCache[event] = out; return out;
+  }
+  function renderTable() {
+    if (!cities) return; var q=($("q").value||"").toLowerCase(), sf=$("status").value;
+    var list = browseRows().filter(function(r){ if(sf&&r.status!==sf)return false; if(q&&r.city.toLowerCase().indexOf(q)<0&&r.country.toLowerCase().indexOf(q)<0)return false; return true; });
+    $("rows").innerHTML = list.map(function(r){ return '<tr data-lat="'+r.lat+'" data-lon="'+r.lon+'" data-city="'+r.city+'">'+
+      '<td style="font-weight:600">'+r.city+'</td><td class="ae-ed__muted">'+r.country+'</td>'+
+      '<td><span class="ae-ed__badge ae-ed__badge--'+r.status+'">'+LABEL[r.status]+'</span></td>'+
+      '<td class="num">'+r.obsc+'%</td><td class="num">'+(r.dur?fmtDur(r.dur):'<span class="ae-ed__muted">—</span>')+'</td><td class="num">'+r.alt+'°</td></tr>'; }).join("");
+    $("count").textContent = list.length + " cities";
+    root.querySelectorAll('[data-ed="rows"] tr').forEach(function(tr){ tr.addEventListener("click",function(){
+      switchView("check"); $("loc").value=tr.dataset.city; showResult(+tr.dataset.lat,+tr.dataset.lon,tr.dataset.city);
+      root.scrollIntoView({behavior:"smooth",block:"start"}); }); });
+  }
+  function updateStats(){ if(!cities) return; var r=browseRows(); var s=root.querySelector('[data-ed="s-count"]'), t=root.querySelector('[data-ed="s-total"]');
+    s.textContent=r.length; t.textContent=r.filter(function(x){return x.status==="totality";}).length; }
+
+  function switchView(v){
+    root.querySelectorAll('[data-ed="view-seg"] button').forEach(function(b){ b.setAttribute("aria-pressed", b.dataset.view===v); });
+    root.querySelectorAll('[data-panel]').forEach(function(p){ p.hidden = p.dataset.panel!==v; });
+    if (v==="browse" && cities && !$("rows").dataset.done){ $("rows").dataset.done="1"; renderTable(); updateStats(); }
+  }
+
+  ready(function () {
+    fetch(CITIES_URL).then(function(r){return r.json();}).then(function(d){ cities=d; updateStats(); if(!$("rows").dataset.done && !root.querySelector('[data-panel="browse"]').hidden){ renderTable(); } });
+    root.querySelectorAll('[data-ed="view-seg"] button').forEach(function(b){ b.addEventListener("click",function(){ switchView(b.dataset.view); }); });
+    root.querySelectorAll('[data-ed="event-seg"] button').forEach(function(b){ b.addEventListener("click",function(){
+      event=b.dataset.event; root.querySelectorAll('[data-ed="event-seg"] button').forEach(function(x){ x.setAttribute("aria-pressed", x===b); });
+      browseCache={}; $("rows").dataset.done=""; updateStats(); if(!root.querySelector('[data-panel="browse"]').hidden){ renderTable(); $("rows").dataset.done="1"; }
+      if(lastLoc) showResult(lastLoc.lat,lastLoc.lon,lastLoc.label); }); });
+    $("check").addEventListener("click",check);
+    $("loc").addEventListener("keydown",function(e){ if(e.key==="Enter") check(); });
+    $("geo").addEventListener("click",function(){ if(!navigator.geolocation){alert("Geolocation unavailable — type a place.");return;}
+      navigator.geolocation.getCurrentPosition(function(p){ showResult(p.coords.latitude,p.coords.longitude,"Your location"); }, function(){ alert("Couldn't get your location — type a place."); }); });
+    var ch=$("chips"); CHIPS.forEach(function(n){ var b=document.createElement("button"); b.type="button"; b.className="ae-ed__chip"; b.textContent=n; b.addEventListener("click",function(){ $("loc").value=n; check(); }); ch.appendChild(b); });
+    $("q").addEventListener("input",renderTable); $("status").addEventListener("input",renderTable);
+    root.querySelectorAll('[data-ed="table"] thead th').forEach(function(th){ th.addEventListener("click",function(){ var k=th.dataset.key;
+      browseCache[event].sort(function(a,b){ var x=a[k],y=b[k]; return typeof x==="string"? x.localeCompare(y): y-x; }); renderTable(); }); });
+    // boot example
+    $("loc").value="Madrid"; showResult(40.4168,-3.7038,"Madrid");
+  });
+})();
+</script>
+
+{% schema %}
+{
+  "name": "AE Eclipse Data",
+  "class": "section",
+  "tag": "section",
+  "settings": [
+    { "type": "color_scheme", "id": "color_scheme", "label": "Color scheme", "default": "scheme-1" },
+    { "type": "color", "id": "accent_color", "label": "Accent", "default": "#000f9f" },
+    { "type": "text", "id": "eyebrow", "label": "Eyebrow", "default": "Eclipse data · 12 Aug 2026 & 2 Aug 2027" },
+    { "type": "text", "id": "heading", "label": "Heading (H1)", "default": "Will you see the eclipse?" },
+    { "type": "textarea", "id": "intro", "label": "Intro", "default": "Tell us where you'll be — we compute exactly what you'll see, when, and whether your spot can catch it. Validated against NASA, computed live in your browser." },
+    { "type": "select", "id": "default_event", "label": "Default eclipse", "default": "2026", "options": [ { "value": "2026", "label": "12 Aug 2026" }, { "value": "2027", "label": "2 Aug 2027" } ] },
+    { "type": "range", "id": "padding_block", "label": "Vertical padding", "min": 16, "max": 160, "step": 4, "unit": "px", "default": 64 }
+  ],
+  "presets": [ { "name": "AE Eclipse Data" } ]
+}
+{% endschema %}
