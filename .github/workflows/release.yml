@@ -38,6 +38,17 @@ jobs:
       - name: Publish release assets (data + engine, CC-BY)
         uses: softprops/action-gh-release@v2
         with:
+          prerelease: true
+          name: ${{ github.ref_name }} — verified 2026 eclipse data (pre-release)
+          body: |
+            **Verified local circumstances for the total solar eclipse of 12 August 2026** over Europe (9,438 cities), computed from Besselian elements.
+
+            **Validated against NASA** — 2026 greatest eclipse (duration 137 s vs 138 s), 2027 greatest eclipse (378 vs 382.6 s), Riga obscuration (0.05 pp). Full methodology + residuals in `BUILD-NOTES.md`.
+
+            **Pre-release** — documented limitations (`BUILD-NOTES.md` §5): geometric altitude (no atmospheric refraction); center-of-figure (no lunar-limb corrections), so cities within ~a city-width of the path limit are flagged `marginal` rather than given a hard total/partial verdict.
+
+            **Assets:** `eclipse-2026.json` / `.csv` (CC-BY-4.0) · `eclipse-engine.min.js` (MIT).
+            Data © Absolute Eclipse — https://absoluteeclipse.eu · City data © GeoNames.
           files: |
             dist/eclipse-engine.min.js
             dist/eclipse-engine.min.js.map
