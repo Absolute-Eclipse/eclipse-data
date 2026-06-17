@@ -54,6 +54,15 @@ test("2027: greatest-eclipse duration ≈ NASA 6m22.6s (within limb tolerance)",
   assert.ok(Math.abs(x.duration_s - nasa) < 15, `duration ${x.duration_s}s vs NASA ${nasa}s`);
 });
 
+test("2026: a sunset-cut location (Catania) is a clamped partial — no phantom totality, no negative Sun", () => {
+  const c = E26.circumstances(37.502, 15.087);
+  assert.ok(c.visible, "Catania sees a partial before sunset");
+  assert.strictEqual(c.total, false, "no observable totality at Catania");
+  assert.strictEqual(c.duration_s, 0, "no phantom totality duration");
+  assert.ok(c.max.alt >= 0, `Sun altitude must not be negative, got ${c.max.alt}`);
+  assert.ok(c.sunsetCut, "the eclipse is cut by sunset here");
+});
+
 test("2026: at() obscuration is bounded [0,1] and 0 when the Sun is down", () => {
   const c = E26.at(41.6488, -0.8891, 0.5);        // ~totality window over Spain
   assert.ok(c.obsc >= 0 && c.obsc <= 1, `obsc out of range: ${c.obsc}`);

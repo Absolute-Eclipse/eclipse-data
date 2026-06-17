@@ -211,6 +211,7 @@
     if (st === "totality") { verdict = "Yes — you're in the path of totality"; sub = "The Sun fully disappears: corona, dark sky, and for those seconds you can look without glasses. The real thing."; }
     else if (st === "marginal") { verdict = "Right on the edge — verdict uncertain"; sub = "You're within a hair of the path limit (~" + obsc + "%). Our model can't call total vs partial this close — treat it as a deep partial and, for guaranteed totality, move into the path."; }
     else { verdict = "A " + obsc + "% partial eclipse"; sub = "Worth watching with certified glasses, but the Sun never fully disappears here. For true totality you'd travel into the path."; }
+    if (c.sunsetCut) sub += " The Sun sets while the eclipse is still going here, so you'll only catch the early phase, low in the west.";
     var hz;
     if (alt >= 20) hz = "The Sun will be well up (about " + alt + "° high) — easy to see from almost anywhere.";
     else if (alt >= 8) hz = "The Sun will be fairly low (about " + alt + "°) in the <b>west</b> — avoid tall buildings or hills that way.";

@@ -14,6 +14,7 @@
 const ELEMENTS_2026 = {
   date: "2026-08-12",
   t0_TD: "18:00:00",          // epoch of the elements (Terrestrial Dynamical Time)
+  validHalfWindow: 3,         // elements valid t0 ± 3 h (15:00–21:00 TDT); don't extrapolate past it
   deltaT_seconds: 72.4,       // Espenak prediction; ~±1 s uncertainty (a prediction, not measured)
   source: "F. Espenak (EclipseWise / NASA)",
   X:  [0.47551, 0.51892, -0.00008, -0.00001],
@@ -35,6 +36,7 @@ const ELEMENTS_2026 = {
 const ELEMENTS_2027 = {
   date: "2027-08-02",
   t0_TD: "10:00:00",          // reference time (TDT)
+  validHalfWindow: 3,         // elements valid 7:00–13:00 TDT (t0 ± 3 h) per NASA
   deltaT_seconds: 71.7,       // NASA/Espenak
   source: "NASA GSFC / F. Espenak — SE2027Aug02Tbeselm (transcribed + cross-checked)",
   X:  [-0.019645, 0.5447105, -0.0000444, -0.0000091],
