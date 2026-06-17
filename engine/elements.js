@@ -27,16 +27,28 @@ const ELEMENTS_2026 = {
   verified: true             // geometry spot-checked; see BUILD-NOTES §3
 };
 
-// ── 2027-08-02 — TO SOURCE. Do NOT generate 2027 data until these are entered
-//    from Espenak AND pass scripts/validate.js. Placeholder kept null on purpose
-//    so any accidental use fails loudly rather than emitting wrong numbers.
+// ── 2027-08-02 — transcribed from NASA GSFC (SE2027Aug02Tbeselm), cross-checked
+//    against the SEdata extraction. STILL UNVERIFIED through our engine: the
+//    engine must be parameterised to accept an element set, then reproduce NASA's
+//    published greatest-eclipse circumstances (below) before verified → true.
+//    Until then generate.js refuses to emit 2027 data.
 const ELEMENTS_2027 = {
   date: "2027-08-02",
-  t0_TD: null,
-  deltaT_seconds: null,       // Espenak prediction for 2027 (~70 s) — confirm
-  source: "F. Espenak (EclipseWise / NASA) — NOT YET ENTERED",
-  X: null, Y: null, D: null, L1: null, L2: null, MU: null, tanF1: null, tanF2: null,
-  verified: false
+  t0_TD: "10:00:00",          // reference time (TDT)
+  deltaT_seconds: 71.7,       // NASA/Espenak
+  source: "NASA GSFC / F. Espenak — SE2027Aug02Tbeselm (transcribed + cross-checked)",
+  X:  [-0.019645, 0.5447105, -0.0000444, -0.0000091],
+  Y:  [0.160063, -0.2111569, -0.0001217, 0.0000037],
+  D:  [17.76247, -0.010181, -0.000004],
+  L1: [0.530596, 0.0000138, -0.0000128],
+  L2: [-0.015464, 0.0000137, -0.0000128],
+  MU: [328.42249, 15.002093, 0.0],
+  tanF1: 0.0046064,
+  tanF2: 0.0045834,
+  verified: false,            // ← pending engine parameterisation + the check below
+  // NASA benchmark to reproduce before flipping verified → true:
+  //   greatest eclipse 10:06:37.7 UT at 25°30.3'N, 033°11.0'E;
+  //   central duration 6m22.6s; path width 257.7 km; Saros 136.
 };
 
 const ELEMENTS = { "2026": ELEMENTS_2026, "2027": ELEMENTS_2027 };

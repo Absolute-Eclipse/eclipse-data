@@ -32,7 +32,7 @@ Solar Eclipses*; the *Explanatory Supplement to the Astronomical Almanac*.
 | Input | Source | Licence / note |
 |---|---|---|
 | Besselian elements, 2026-08-12 | F. Espenak (EclipseWise / NASA) — t0 = 18:00 TD | element table in `engine/elements.js` |
-| Besselian elements, 2027-08-02 | **TO SOURCE** (Espenak) — *not yet entered* | gate: do not generate 2027 data until filled + validated |
+| Besselian elements, 2027-08-02 | NASA GSFC / Espenak — `SE2027Aug02Tbeselm`, t0 = 10:00 TDT, ΔT = 71.7 s | **entered** (`engine/elements.js`, cross-checked) but `verified: false` — engine not yet parameterised to use them, not yet validated |
 | ΔT (2026) | 72.4 s (Espenak prediction) | a *prediction*; ~±1 s uncertainty → affects UT↔TD. Document, don't hide. |
 | Cities | GeoNames `cities15000`, Europe filter | CC-BY-4.0; gives name/lat/lon/country/**timezone**/population |
 | Local-time conversion | GeoNames timezone field + IANA tz | needed to turn UT contacts into correct local clock times |
@@ -73,7 +73,11 @@ If any benchmark exceeds tolerance, `validate.js` exits non-zero and **no data i
 
 ## 5. Known gaps (the honest backlog — close before publishing)
 
-1. **2027 Besselian elements** not yet entered.
+1. **2027 Besselian elements** — entered from NASA GSFC (`engine/elements.js`,
+   `verified: false`). Remaining: parameterise the engine to accept an element set
+   (currently 2026 is baked in; this verified code must be re-validated after), then
+   reproduce NASA's published greatest-eclipse circumstances (10:06:37.7 UT at
+   25°30.3′N 033°11.0′E, duration 6m22.6s) before marking verified.
 2. **Atmospheric refraction + Sun semidiameter** not applied. `alt = asin(ζ)` is
    *geometric*. Critical for a sunset eclipse: at 2–7° altitude, refraction (~0.1–0.5°)
    and the Sun's ~0.27° radius change the reported altitude and whether the disk is
