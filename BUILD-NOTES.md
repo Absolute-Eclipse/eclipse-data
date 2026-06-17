@@ -108,6 +108,13 @@ Match the rigour of NASA/Espenak, layered so laypeople aren't forced to read it:
 - **2026-06-17** — Audited the engine against a NASA-grade bar. Verdict: geometry
   correct and spot-checked, but **not yet publication-verified** — see §5. Milestone 1
   is closing those gaps, not generating data.
+- **2026-06-17** — Distribution model: per-year eclipse data and the minified
+  engine are **build/release artifacts**, not committed. The release pipeline
+  (`.github/workflows/release.yml`, on tag `v*`) runs tests + the validation gate
+  (**blocking**), then generates the data and attaches `eclipse-YYYY.json/.csv` +
+  `eclipse-engine.min.js` as **versioned GitHub Release assets** (immutable,
+  citable by version, CC-BY). The repo holds sources only. A release therefore
+  *cannot* be cut from unverified data — the gate and the publish step are one.
 - **2026-06-17** — Tooling. Unit tests via Node's built-in runner (`node --test`,
   zero deps) in `test/` — 6 cases passing (Riga 80.3%, Zaragoza total, Madrid
   deep-but-not-total, NZ no-eclipse, determinism, bounds). Bundling via **esbuild**

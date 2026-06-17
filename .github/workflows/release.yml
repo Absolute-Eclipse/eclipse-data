@@ -1,0 +1,45 @@
+name: Release
+
+# Per-year eclipse data + the minified engine are built here and attached as
+# versioned, immutable, citable assets. Tag a release to cut it, e.g.:
+#   git tag v2026.1 && git push origin v2026.1
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write        # create the GitHub Release
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install
+
+      - name: Tests (engine correctness)
+        run: npm test
+
+      # BLOCKING — a release cannot be produced from unverified data.
+      - name: Validation gate
+        run: npm run validate
+
+      - name: Build minified engine
+        run: npm run dist
+
+      - name: Generate per-year data
+        run: |
+          node scripts/generate.js 2026
+          # node scripts/generate.js 2027   # enable once 2027 elements pass the gate
+
+      - name: Publish release assets (data + engine, CC-BY)
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/eclipse-engine.min.js
+            dist/eclipse-engine.min.js.map
+            data/eclipse-2026.json
+            data/eclipse-2026.csv

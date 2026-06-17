@@ -4,12 +4,17 @@ node_modules/
 Thumbs.db
 
 # Raw third-party downloads (large; fetched by scripts, not committed)
-data/raw/            # GeoNames dumps, DEM tiles, etc.
+data/raw/
 *.zip
 *.tif
 *.hgt
 
-# Keep the GENERATED open data committed (served by Pages):
-!data/eclipse-2026.json
-!data/eclipse-2027.json
+# Build & release artifacts — produced by the pipeline, NOT committed.
+# Per-year eclipse data and the minified bundle ship as versioned GitHub Release
+# assets (built only after the validation gate passes). The repo holds sources only.
+/dist/
+data/eclipse-*.json
+data/eclipse-*.csv
+
+# ...but vendored SOURCE inputs are committed (e.g. the GeoNames-derived city index):
 !data/cities.europe.json

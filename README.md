@@ -18,20 +18,26 @@ elements, validated against NASA/Espenak, and published with its residuals.
 | `scripts/generate.js` | Engine × city list → `data/eclipse-YYYY.json` (+ CSV). |
 | `scripts/validate.js` | Benchmarks the engine vs NASA/Espenak; prints residuals; **non-zero exit if out of tolerance** (the publish gate). |
 | `scripts/horizon.js` *(phase 2)* | Western-horizon profile per point from a DEM. |
-| `data/cities.europe.json` | City index (GeoNames-derived). |
-| `data/eclipse-2026.json` · `eclipse-2027.json` | Generated open data. |
+| `data/cities.europe.json` | City index (GeoNames-derived) — committed source input. |
+| `data/eclipse-2026.json` · `eclipse-2027.json` | Per-year data — **release artifacts** (built by the pipeline, attached to a GitHub Release; not committed). |
 | `explorer/index.html` | Standalone Explorer (the on-site tool also lives in the Shopify theme). |
 | `widget/` | Embeddable widget — what other sites paste in (attribution backlink baked in). |
 
 ## Data flow
 
 ```
-engine + elements ──> scripts/generate.js ──> data/*.json ──┬─> GitHub Pages  (open data + widget + embeds)
-        ▲                                                    └─> Shopify theme (ae-eclipse-data section, on-site tool)
-        └── scripts/validate.js  (HARD GATE: must pass before data is published)
+engine + elements ─► validate (GATE) ─► generate ─► per-year data + min engine
+                                                          │  (only on a release tag)
+                       tag v* ─► release pipeline ─► GitHub Release assets   (versioned, citable, CC-BY)
+                                                          ├─► GitHub Pages: explorer + embeddable widget
+                                                          └─► Shopify theme: ae-eclipse-data (pins a release)
 ```
 
-One engine, two surfaces: the on-site tool and every external embed eat the **same** validated JSON.
+The repo holds **sources only**. Per-year data (`eclipse-YYYY.json/.csv`) and the
+minified engine are **build/release artifacts** — produced by the pipeline and
+attached to a [GitHub Release](https://github.com/Absolute-Eclipse/eclipse-data/releases)
+*only after the validation gate passes*. The on-site tool and every external embed
+then eat the **same** versioned, validated data.
 
 ## Licences
 
