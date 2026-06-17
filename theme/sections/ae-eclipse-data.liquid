@@ -60,7 +60,10 @@
     <section data-panel="check">
       <p class="ae-ed__lede">Type a place or coordinates, or use your location — we compute exactly what you'll see.</p>
       <div class="ae-ed__locrow">
-        <input data-ed="loc" type="text" placeholder="e.g. Madrid   ·   or  40.42, -3.70" autocomplete="off">
+        <div class="ae-ed__ac-wrap">
+          <input data-ed="loc" type="text" placeholder="Start typing a place…   ·   or  40.42, -3.70" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false">
+          <ul class="ae-ed__ac" data-ed="ac" role="listbox" hidden></ul>
+        </div>
         <button type="button" class="ae-ed__btn" data-ed="check">Check</button>
         <button type="button" class="ae-ed__btn ae-ed__btn--ghost" data-ed="geo">📍 My location</button>
       </div>
@@ -137,7 +140,13 @@
   .ae-ed__lede { margin: 0 0 var(--margin-lg); color: rgb(var(--color-foreground-rgb) / 0.7); font-size: var(--font-size--md); }
 
   .ae-ed__locrow { display: flex; flex-wrap: wrap; gap: var(--gap-sm); }
-  .ae-ed__locrow input { flex: 1 1 280px; font-family: var(--font-body--family); font-size: var(--font-size--md); padding: .7rem .85rem; border: var(--style-border-width) solid var(--color-border); border-radius: var(--style-border-radius-inputs); min-height: 46px; background: var(--color-background); color: var(--color-foreground); }
+  .ae-ed__ac-wrap { position: relative; flex: 1 1 280px; }
+  .ae-ed__locrow input { width: 100%; font-family: var(--font-body--family); font-size: var(--font-size--md); padding: .7rem .85rem; border: var(--style-border-width) solid var(--color-border); border-radius: var(--style-border-radius-inputs); min-height: 46px; background: var(--color-background); color: var(--color-foreground); }
+  .ae-ed__ac { position: absolute; z-index: var(--layer-overlay, 16); inset-inline: 0; top: calc(100% - 1px); list-style: none; margin: 0; padding: 0; max-height: 280px; overflow-y: auto; background: var(--color-background); border: var(--style-border-width) solid var(--color-border); box-shadow: 0 12px 28px rgb(var(--color-foreground-rgb) / 0.12); }
+  .ae-ed__ac[hidden] { display: none; }
+  .ae-ed__ac li { padding: .55rem .85rem; cursor: pointer; font-size: var(--font-size--sm); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ae-ed__ac li small { color: rgb(var(--color-foreground-rgb) / 0.55); margin-inline-start: .3rem; }
+  .ae-ed__ac li.is-active, .ae-ed__ac li:hover { background: rgb(var(--color-foreground-rgb) / 0.06); }
   .ae-ed__btn { font-family: var(--font-subheading--family); font-weight: 600; font-size: var(--font-size--xs); letter-spacing: var(--letter-spacing-sm); text-transform: uppercase; display: inline-flex; align-items: center; justify-content: center; gap: .45rem; padding: .7rem 1.1rem; border: var(--style-border-width) solid var(--ae-accent); border-radius: var(--style-border-radius-buttons-primary); background: var(--ae-accent); color: #fff; cursor: pointer; min-height: 46px; text-decoration: none; white-space: nowrap; }
   .ae-ed__btn:hover { opacity: .86; }
   .ae-ed__btn--ghost { background: transparent; color: var(--ae-accent); }
@@ -236,22 +245,36 @@
 
   function showError(msg){ var e=$("error"); if(e){ e.textContent=msg; e.hidden=false; } }
   function clearError(){ var e=$("error"); if(e) e.hidden=true; }
-  function resolve(s) {
-    s = (s||"").trim(); if (!s) return null;
-    var m = s.match(/^(-?\d+(?:\.\d+)?)[ ,]+(-?\d+(?:\.\d+)?)$/);
-    if (m) return { lat:+m[1], lon:+m[2], label:(+m[1]).toFixed(3)+", "+(+m[2]).toFixed(3) };
-    var key = s.toLowerCase();
-    if (COORDS[key]) { var cc=COORDS[key]; return { lat:cc[0], lon:cc[1], label:s.replace(/\b\w/g,function(x){return x.toUpperCase();}) }; }
-    if (cities) {                                  // match against the loaded city index (sorted by population)
-      var exact=null, pre=null;
-      for (var i=0;i<cities.length;i++){ var ci=cities[i], n=ci.n.toLowerCase();
-        if (n===key){ exact=ci; break; } if (!pre && n.indexOf(key)===0) pre=ci; }
-      var hit = exact || pre;
-      if (hit) return { lat:hit.lat, lon:hit.lon, label:hit.n + (hit.c ? ", "+hit.c : "") };
-    }
-    return null;
+
+  // Geocoding autocomplete (Photon / OpenStreetMap — full place coverage, no key).
+  // Used for the SEARCH BOX only; the engine + data stay same-origin, and coordinates
+  // / 📍 My location still work even if the geocoder is unreachable.
+  var acItems=[], acActive=-1, acTimer=null, acToken=0;
+  function esc(s){ return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];}); }
+  function isCoords(v){ return /^(-?\d+(?:\.\d+)?)[ ,]+(-?\d+(?:\.\d+)?)$/.test(v); }
+  function hideAc(){ var ul=$("ac"); if(ul){ ul.hidden=true; ul.innerHTML=""; } acItems=[]; acActive=-1; $("loc").setAttribute("aria-expanded","false"); }
+  function hlAc(){ $("ac").querySelectorAll("li").forEach(function(li,i){ li.classList.toggle("is-active", i===acActive); }); }
+  function renderAc(feats){
+    var ul=$("ac"); acItems=feats; acActive=-1;
+    if(!feats.length){ hideAc(); return; }
+    ul.innerHTML = feats.map(function(f,i){ var p=f.properties||{}, sub=[p.state,p.country].filter(Boolean).join(", ");
+      return '<li data-i="'+i+'" role="option">'+esc(p.name||p.city||"?")+(sub?' <small>'+esc(sub)+'</small>':'')+'</li>'; }).join("");
+    ul.hidden=false; $("loc").setAttribute("aria-expanded","true");
+    ul.querySelectorAll("li").forEach(function(li){ li.addEventListener("mousedown",function(e){ e.preventDefault(); pickAc(+li.dataset.i); }); });
   }
-  function check(){ var r=resolve($("loc").value); if(!r){ showError("Couldn't find that place. Try a nearby city, coordinates like 40.42, -3.70, or use 📍 My location."); return; } clearError(); showResult(r.lat,r.lon,r.label); }
+  function pickAc(i){ var f=acItems[i]; if(!f||!f.geometry) return; var co=f.geometry.coordinates, p=f.properties||{};
+    var name=p.name||p.city||"", label=name+(p.country?", "+p.country:""); $("loc").value=name||label; hideAc(); clearError(); showResult(co[1],co[0],label); }
+  function suggest(q){ var tok=++acToken;
+    fetch("https://photon.komoot.io/api/?limit=6&lang=en&lat=46&lon=8&q="+encodeURIComponent(q))
+      .then(function(r){return r.json();}).then(function(d){ if(tok!==acToken) return; renderAc((d&&d.features)||[]); })
+      .catch(function(){ /* geocoder down — coordinates / My location still work */ }); }
+  function check(){
+    var v=$("loc").value.trim(), m=v.match(/^(-?\d+(?:\.\d+)?)[ ,]+(-?\d+(?:\.\d+)?)$/);
+    if(m){ hideAc(); clearError(); showResult(+m[1],+m[2],(+m[1]).toFixed(3)+", "+(+m[2]).toFixed(3)); return; }
+    if(acItems.length){ pickAc(acActive>=0?acActive:0); return; }
+    if(v.length>=2){ suggest(v); return; }
+    showError("Type a city or coordinates like 40.42, -3.70.");
+  }
 
   function browseRows() {
     if (browseCache[event]) return browseCache[event];
@@ -290,10 +313,18 @@
       browseCache={}; $("rows").dataset.done=""; updateStats(); if(!root.querySelector('[data-panel="browse"]').hidden){ renderTable(); $("rows").dataset.done="1"; }
       if(lastLoc) showResult(lastLoc.lat,lastLoc.lon,lastLoc.label); }); });
     $("check").addEventListener("click",check);
-    $("loc").addEventListener("keydown",function(e){ if(e.key==="Enter") check(); });
+    $("loc").addEventListener("input",function(){ clearError(); var v=$("loc").value.trim();
+      if(isCoords(v)||v.length<2){ hideAc(); return; } clearTimeout(acTimer); acTimer=setTimeout(function(){ suggest(v); },250); });
+    $("loc").addEventListener("keydown",function(e){ var ul=$("ac");
+      if(ul && !ul.hidden && acItems.length){
+        if(e.key==="ArrowDown"){ e.preventDefault(); acActive=Math.min(acActive+1,acItems.length-1); hlAc(); return; }
+        if(e.key==="ArrowUp"){ e.preventDefault(); acActive=Math.max(acActive-1,0); hlAc(); return; }
+        if(e.key==="Escape"){ hideAc(); return; } }
+      if(e.key==="Enter"){ e.preventDefault(); check(); } });
+    $("loc").addEventListener("blur",function(){ setTimeout(hideAc,150); });
     $("geo").addEventListener("click",function(){ if(!navigator.geolocation){ showError("Geolocation isn't available here — type a city or coordinates."); return; }
       navigator.geolocation.getCurrentPosition(function(p){ clearError(); showResult(p.coords.latitude,p.coords.longitude,"Your location"); }, function(){ showError("Couldn't get your location — type a city or coordinates."); }); });
-    var ch=$("chips"); CHIPS.forEach(function(n){ var b=document.createElement("button"); b.type="button"; b.className="ae-ed__chip"; b.textContent=n; b.addEventListener("click",function(){ $("loc").value=n; check(); }); ch.appendChild(b); });
+    var ch=$("chips"); CHIPS.forEach(function(n){ var b=document.createElement("button"); b.type="button"; b.className="ae-ed__chip"; b.textContent=n; b.addEventListener("click",function(){ var c=COORDS[n.toLowerCase()]; $("loc").value=n; hideAc(); clearError(); if(c) showResult(c[0],c[1],n); }); ch.appendChild(b); });
     $("q").addEventListener("input",renderTable); $("status").addEventListener("input",renderTable);
     root.querySelectorAll('[data-ed="table"] thead th').forEach(function(th){ th.addEventListener("click",function(){ var k=th.dataset.key;
       browseCache[event].sort(function(a,b){ var x=a[k],y=b[k]; return typeof x==="string"? x.localeCompare(y): y-x; }); renderTable(); }); });
