@@ -11,7 +11,7 @@
     "cities": "node scripts/cities.js",
     "validate": "node scripts/validate.js",
     "generate": "npm run validate && node scripts/generate.js",
-    "build:engine": "esbuild engine/besselian.js --minify --sourcemap --outfile=dist/eclipse-engine.min.js",
+    "build:engine": "esbuild engine/browser.js --bundle --minify --sourcemap --global-name=Eclipse --outfile=dist/eclipse-engine.min.js",
     "dist": "npm run build:engine"
   },
   "comment": "test = code correctness (fast). validate = publish gate vs NASA/Espenak. generate runs validate first, so data is never produced from an unverified engine. dist bundles the engine as a usable open library. (widget bundle: dist:widget — TODO.)",
