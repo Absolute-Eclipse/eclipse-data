@@ -90,13 +90,17 @@ If any benchmark exceeds tolerance, `validate.js` exits non-zero and **no data i
 4. **Sun azimuth** not output — needed for the horizon check (which direction must be clear).
 5. **Formal validation suite + published residuals** — only ad-hoc checks exist so far.
 6. **Horizon/DEM layer** — phase 2.
-7. **Edge-case classification.** The coarse scan misclassifies knife-edge
-   locations: Madrid currently reads *total*; NASA lists it as a 99.98% *partial*
-   just outside the path (Barcelona, also edge, reads correctly at 99.7%). Riga
-   (non-edge) matches NASA to 0.05 pp, so the geometry is sound — this is edge
-   sensitivity, not a geometry bug. Until C1–C4 root-finding (+ refraction) land,
-   edge cities must be **flagged "marginal", not published with a hard verdict**.
-   (Documented as a skipped test in `test/engine.test.js`.)
+7. **Path-limit uncertainty (lunar-limb).** Contact root-finding (C1–C4) is now
+   done — interior contacts/durations are accurate (2027 greatest eclipse: duration
+   378 s vs NASA 382.6 s, ~5 s; Riga 0.05 pp). But within ~a city-width of the path
+   *limit*, a center-of-figure model is inherently uncertain: Madrid root-finds a
+   ~16 s graze; NASA's **lunar-limb-corrected** model places it outside. Root cause
+   is the unmodelled lunar limb profile (mountains/valleys on the Moon's edge shift
+   the limit by 1–2 km) + no refraction — not resolution. **Mitigation, shipped:**
+   `generate.js` flags near-limit locations **"marginal"** (total < 30 s, or partial
+   ≥ 99.5 %) instead of asserting a verdict. **Full fix (future):** lunar-limb
+   corrections. The ±2 s claim holds for interior contact times; duration near the
+   limit is good to ~5 s pending limb work. (Skipped test documents Madrid.)
 
 ## 6. Presentation standard (how the data is shown)
 

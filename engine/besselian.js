@@ -64,7 +64,49 @@
       return { visible: true, peak: best.obsc, total: best.total, alt: best.alt, t: best.t, utHours: utHoursOfT(best.t) };
     }
 
-    return { at: at, scanMax: scanMax, utHoursOfT: utHoursOfT, elements: el };
+    // Precise local circumstances via root-finding (not a coarse scan):
+    //   partial boundary  C1,C4 : m = L1'      (penumbra tangent)
+    //   umbral boundary   C2,C3 : m = −L2'     (umbra tangent; only if total)
+    //   maximum eclipse          : min m       (closest approach of the shadow axis)
+    // Contacts are GEOMETRIC (NASA-table convention); each carries the Sun's
+    // altitude + an `up` flag so a below-horizon contact (sunset eclipse) is visible.
+    function circumstances(lat, lon) {
+      var STEP = 0.5 / 60, T0 = -3.5, T1 = 3.5;
+      var g1 = function (t) { var g = geom(lat, lon, t); return g.m - g.l1p; };
+      var f2 = function (t) { var g = geom(lat, lon, t); return g.m + g.l2p; };
+      var mOf = function (t) { return geom(lat, lon, t).m; };
+      var altAt = function (t) { return Math.asin(Math.max(-1, Math.min(1, geom(lat, lon, t).zeta))) / RAD; };
+      var upAt = function (t) { return geom(lat, lon, t).zeta > 0; };
+      var bisect = function (f, a, b) { var fa = f(a); for (var i = 0; i < 80; i++) { var mid = (a + b) / 2, fm = f(mid); if (fa * fm <= 0) b = mid; else { a = mid; fa = fm; } if (b - a < 1e-10) break; } return (a + b) / 2; };
+
+      var prevT = T0, pg1 = g1(T0), pf2 = f2(T0), minM = Infinity, tMax = null;
+      var c1 = null, c4 = null, c2 = null, c3 = null;
+      for (var t = T0 + STEP; t <= T1 + 1e-9; t += STEP) {
+        var g = geom(lat, lon, t), cg1 = g.m - g.l1p, cf2 = g.m + g.l2p;
+        if (g.m < minM) { minM = g.m; tMax = t; }
+        if (pg1 > 0 && cg1 <= 0 && c1 === null) c1 = bisect(g1, prevT, t);
+        if (pg1 < 0 && cg1 >= 0) c4 = bisect(g1, prevT, t);
+        if (pf2 > 0 && cf2 <= 0 && c2 === null) c2 = bisect(f2, prevT, t);
+        if (pf2 < 0 && cf2 >= 0) c3 = bisect(f2, prevT, t);
+        prevT = t; pg1 = cg1; pf2 = cf2;
+      }
+      if (c1 === null) return { visible: false, eclipse: false };       // never within penumbra
+
+      var a = tMax - STEP, b = tMax + STEP;                             // refine max (min m) by ternary search
+      for (var i = 0; i < 80; i++) { var m1 = a + (b - a) / 3, m2 = b - (b - a) / 3; if (mOf(m1) < mOf(m2)) b = m2; else a = m1; if (b - a < 1e-10) break; }
+      tMax = (a + b) / 2;
+      var mx = at(lat, lon, tMax);
+      var contact = function (tc) { return tc == null ? null : { ut: utHoursOfT(tc), alt: +altAt(tc).toFixed(2), up: upAt(tc) }; };
+      return {
+        visible: mx.up || upAt(c1) || (c4 != null && upAt(c4)),
+        eclipse: true, total: mx.total,
+        max: { ut: utHoursOfT(tMax), obsc: mx.obsc, mag: mx.mag, alt: +mx.alt.toFixed(2), up: mx.up },
+        c1: contact(c1), c2: contact(c2), c3: contact(c3), c4: contact(c4),
+        duration_s: (c2 != null && c3 != null) ? Math.round((c3 - c2) * 3600) : 0
+      };
+    }
+
+    return { at: at, scanMax: scanMax, circumstances: circumstances, utHoursOfT: utHoursOfT, elements: el };
   }
 
   var api = { makeEngine: makeEngine };

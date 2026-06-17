@@ -31,14 +31,28 @@ test("2026: Madrid sees a deep (≥99%) eclipse near the southern edge", () => {
   assert.ok(r.visible && r.peak > 0.99, `Madrid should be ≥99%, got ${r.peak}`);
 });
 
-// KNOWN LIMITATION (BUILD-NOTES §5): the coarse 0.5-min scan can't reliably
-// classify knife-edge locations. Madrid currently reads TOTAL; NASA lists it as a
-// 99.98% PARTIAL just outside the path. The binary verdict at the edge is not
-// trustworthy until contact-time root-finding (C1–C4) + refraction land. Riga
-// (non-edge) matches NASA to 0.05 pp, so the geometry itself is sound.
+// KNOWN LIMITATION (BUILD-NOTES §5.7): even with precise C1–C4 root-finding, a
+// center-of-figure model is uncertain within ~a city-width of the path limit.
+// Madrid root-finds a ~16 s graze; NASA's lunar-limb-corrected model places it
+// outside. We flag such cities "marginal" downstream rather than assert a verdict.
+// (Riga, non-edge, matches NASA to 0.05 pp — the geometry itself is sound.)
 test("2026: Madrid total/partial classification matches NASA",
-  { skip: "pending C1–C4 root-finding + refraction (engine reads total; NASA: 99.98% partial)" },
-  () => { assert.strictEqual(E26.scanMax(40.4168, -3.7038).total, false); });
+  { skip: "edge-limit uncertainty: engine finds a ~16 s graze; NASA (limb-corrected) says partial. Flagged 'marginal'; needs lunar-limb corrections." },
+  () => { assert.strictEqual(E26.circumstances(40.4168, -3.7038).total, false); });
+
+test("2026: Zaragoza totality ~1–1.5 min, contacts bracket the maximum", () => {
+  const x = E26.circumstances(41.6488, -0.8891);
+  assert.strictEqual(x.total, true);
+  assert.ok(x.duration_s > 60 && x.duration_s < 110, `Zaragoza totality ${x.duration_s}s (expected ~77 s)`);
+  assert.ok(x.c1.ut < x.max.ut && x.max.ut < x.c4.ut, "C1 < max < C4");
+  assert.ok(x.c2.ut < x.c3.ut, "C2 < C3");
+});
+
+test("2027: greatest-eclipse duration ≈ NASA 6m22.6s (within limb tolerance)", () => {
+  const x = E27.circumstances(25.505, 33.183);
+  const nasa = 6 * 60 + 22.6;            // 382.6 s
+  assert.ok(Math.abs(x.duration_s - nasa) < 15, `duration ${x.duration_s}s vs NASA ${nasa}s`);
+});
 
 test("2026: at() obscuration is bounded [0,1] and 0 when the Sun is down", () => {
   const c = E26.at(41.6488, -0.8891, 0.5);        // ~totality window over Spain

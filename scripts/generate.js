@@ -32,17 +32,33 @@ if (!fs.existsSync(CITIES)) {
 }
 
 const engine = makeEngine(ELEMENTS[YEAR]);
+// Near the path limit a center-of-figure Besselian model is uncertain by ~a city
+// width (lunar-limb / refraction not modelled). Flag those "marginal" rather than
+// publish a wrong total/partial verdict. See BUILD-NOTES §5.7.
+const EDGE_TOTAL_S = 30;     // total but shorter than this ⇒ grazing ⇒ marginal
+const EDGE_PARTIAL = 99.5;   // partial but ≥ this % ⇒ near the limit ⇒ marginal
 const cities = JSON.parse(fs.readFileSync(CITIES, "utf8"));
 const records = cities.map(c => {
-  const m = engine.scanMax(c.lat, c.lon);
+  const x = engine.circumstances(c.lat, c.lon);
+  if (!x.eclipse || !x.visible) {
+    return { city: c.name, country: c.country, lat: c.lat, lon: c.lon, population: c.population, visible: false, status: "none" };
+  }
+  const obsc = +(x.max.obsc * 100).toFixed(2);
+  let status;
+  if (x.total) status = x.duration_s < EDGE_TOTAL_S ? "marginal" : "totality";
+  else status = obsc >= EDGE_PARTIAL ? "marginal" : obsc >= 90 ? "deep-partial" : "partial";
   return {
     city: c.name, country: c.country, lat: c.lat, lon: c.lon, population: c.population,
-    visible: m.visible,
-    status: !m.visible ? "none" : m.total ? "totality" : m.peak >= 0.999 ? "near" : "partial",
-    obscuration: m.visible ? +(m.peak * 100).toFixed(1) : 0,   // %
-    sun_altitude: m.visible ? +m.alt.toFixed(1) : null,        // geometric (refraction TODO)
-    max_ut: m.visible ? +m.utHours.toFixed(4) : null,          // UT decimal hours (local time via c.timezone — TODO)
-    // TODO: c1/c2/c3/c4, duration, sun_azimuth, west_horizon_alt
+    visible: true, status, total: x.total,
+    obscuration: obsc,
+    totality_s: x.duration_s,
+    sun_altitude: x.max.alt,                 // geometric (refraction TODO)
+    max_ut: +x.max.ut.toFixed(4),            // UT decimal hours (local via c.timezone — TODO)
+    c1_ut: x.c1 ? +x.c1.ut.toFixed(4) : null,
+    c2_ut: x.c2 ? +x.c2.ut.toFixed(4) : null,
+    c3_ut: x.c3 ? +x.c3.ut.toFixed(4) : null,
+    c4_ut: x.c4 ? +x.c4.ut.toFixed(4) : null,
+    // TODO: local times (c.timezone); sun_azimuth; west_horizon_alt; lunar-limb edge refinement
   };
 });
 
@@ -53,7 +69,7 @@ fs.writeFileSync(OUT_JSON, JSON.stringify({
   count: records.length, locations: records
 }, null, 2));
 
-const cols = ["city","country","lat","lon","status","obscuration","sun_altitude"];
+const cols = ["city","country","lat","lon","status","obscuration","totality_s","sun_altitude","max_ut"];
 const csv = [cols.join(",")].concat(records.map(r => cols.map(k => r[k]).join(","))).join("\n");
 fs.writeFileSync(OUT_CSV, csv);
 
