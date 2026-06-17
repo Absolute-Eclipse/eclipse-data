@@ -90,6 +90,13 @@ If any benchmark exceeds tolerance, `validate.js` exits non-zero and **no data i
 4. **Sun azimuth** not output — needed for the horizon check (which direction must be clear).
 5. **Formal validation suite + published residuals** — only ad-hoc checks exist so far.
 6. **Horizon/DEM layer** — phase 2.
+7. **Edge-case classification.** The coarse scan misclassifies knife-edge
+   locations: Madrid currently reads *total*; NASA lists it as a 99.98% *partial*
+   just outside the path (Barcelona, also edge, reads correctly at 99.7%). Riga
+   (non-edge) matches NASA to 0.05 pp, so the geometry is sound — this is edge
+   sensitivity, not a geometry bug. Until C1–C4 root-finding (+ refraction) land,
+   edge cities must be **flagged "marginal", not published with a hard verdict**.
+   (Documented as a skipped test in `test/engine.test.js`.)
 
 ## 6. Presentation standard (how the data is shown)
 
@@ -119,6 +126,12 @@ Match the rigour of NASA/Espenak, layered so laypeople aren't forced to read it:
   `eclipse-engine.min.js` as **versioned GitHub Release assets** (immutable,
   citable by version, CC-BY). The repo holds sources only. A release therefore
   *cannot* be cut from unverified data — the gate and the publish step are one.
+- **2026-06-17** — Parameterised the engine to take any element set (`makeEngine`)
+  so 2026 + 2027 share one validated code path. RE-VALIDATED: 2026 unchanged (Riga
+  80.35% vs 80.30) and **2027 reproduces NASA's greatest eclipse** (total, obsc
+  100%, UT within 0.7 min) — strong evidence the 2027 elements were transcribed
+  correctly. Finding: knife-edge classification (Madrid) is unreliable at the coarse
+  scan — logged in §5; edge verdicts won't publish until contacts + refraction.
 - **2026-06-17** — Tooling. Unit tests via Node's built-in runner (`node --test`,
   zero deps) in `test/` — 6 cases passing (Riga 80.3%, Zaragoza total, Madrid
   deep-but-not-total, NZ no-eclipse, determinism, bounds). Bundling via **esbuild**

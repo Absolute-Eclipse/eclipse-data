@@ -45,8 +45,9 @@ const ELEMENTS_2027 = {
   MU: [328.42249, 15.002093, 0.0],
   tanF1: 0.0046064,
   tanF2: 0.0045834,
-  verified: false,            // ← pending engine parameterisation + the check below
-  // NASA benchmark to reproduce before flipping verified → true:
+  verified: false,            // greatest eclipse REPRODUCED (below); still false pending
+                              // duration (contacts) + edge checks before publication.
+  // NASA benchmark — REPRODUCED 2026-06-17 (total, obsc 100%, UT within 0.7 min):
   //   greatest eclipse 10:06:37.7 UT at 25°30.3'N, 033°11.0'E;
   //   central duration 6m22.6s; path width 257.7 km; Saros 136.
 };

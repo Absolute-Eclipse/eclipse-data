@@ -13,7 +13,8 @@
    ───────────────────────────────────────────────────────────────────────── */
 const fs = require("fs");
 const path = require("path");
-const Eclipse = require("../engine/besselian.js");
+const { makeEngine } = require("../engine/besselian.js");
+const { ELEMENTS } = require("../engine/elements.js");
 
 const YEAR = process.argv[2] || "2026";
 const CITIES = path.join(__dirname, "..", "data", "cities.europe.json");
@@ -30,16 +31,18 @@ if (!fs.existsSync(CITIES)) {
   process.exit(1);
 }
 
+const engine = makeEngine(ELEMENTS[YEAR]);
 const cities = JSON.parse(fs.readFileSync(CITIES, "utf8"));
 const records = cities.map(c => {
-  const m = Eclipse.scanMax(c.lat, c.lon);
+  const m = engine.scanMax(c.lat, c.lon);
   return {
     city: c.name, country: c.country, lat: c.lat, lon: c.lon, population: c.population,
     visible: m.visible,
     status: !m.visible ? "none" : m.total ? "totality" : m.peak >= 0.999 ? "near" : "partial",
     obscuration: m.visible ? +(m.peak * 100).toFixed(1) : 0,   // %
     sun_altitude: m.visible ? +m.alt.toFixed(1) : null,        // geometric (refraction TODO)
-    // TODO: c1/c2/c3/c4 (UT + local via c.timezone), duration, sun_azimuth, west_horizon_alt
+    max_ut: m.visible ? +m.utHours.toFixed(4) : null,          // UT decimal hours (local time via c.timezone — TODO)
+    // TODO: c1/c2/c3/c4, duration, sun_azimuth, west_horizon_alt
   };
 });
 
