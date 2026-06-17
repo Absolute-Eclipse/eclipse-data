@@ -1,0 +1,15 @@
+node_modules/
+*.log
+.DS_Store
+Thumbs.db
+
+# Raw third-party downloads (large; fetched by scripts, not committed)
+data/raw/            # GeoNames dumps, DEM tiles, etc.
+*.zip
+*.tif
+*.hgt
+
+# Keep the GENERATED open data committed (served by Pages):
+!data/eclipse-2026.json
+!data/eclipse-2027.json
+!data/cities.europe.json

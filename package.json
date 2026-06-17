@@ -1,0 +1,21 @@
+{
+  "name": "eclipse-data",
+  "version": "0.1.0",
+  "private": false,
+  "description": "Verified local-circumstances data for the 2026 & 2027 total solar eclipses over Europe.",
+  "license": "MIT",
+  "homepage": "https://absoluteeclipse.eu",
+  "repository": { "type": "git", "url": "https://github.com/absolute-eclipse/eclipse-data" },
+  "scripts": {
+    "test": "node --test",
+    "validate": "node scripts/validate.js",
+    "generate": "npm run validate && node scripts/generate.js",
+    "build:engine": "esbuild engine/besselian.js --minify --sourcemap --outfile=dist/eclipse-engine.min.js",
+    "dist": "npm run build:engine"
+  },
+  "comment": "test = code correctness (fast). validate = publish gate vs NASA/Espenak. generate runs validate first, so data is never produced from an unverified engine. dist bundles the engine as a usable open library. (widget bundle: dist:widget — TODO.)",
+  "devDependencies": {
+    "esbuild": "^0.23.0"
+  },
+  "engines": { "node": ">=18" }
+}
